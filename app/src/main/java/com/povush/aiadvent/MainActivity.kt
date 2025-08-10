@@ -74,6 +74,11 @@ fun ChatApp(vm: ChatViewModel = hiltViewModel()) {
                     title = {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text("AI Advent Chat")
+                            Text(
+                                state.model,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                             HorizontalDivider(
                                 modifier = Modifier
                                     .padding(
@@ -81,17 +86,14 @@ fun ChatApp(vm: ChatViewModel = hiltViewModel()) {
                                     )
                                     .fillMaxWidth()
                             )
-//                            Text(
-//                                state.model,
-//                                style = MaterialTheme.typography.labelSmall,
-//                                color = MaterialTheme.colorScheme.onSurfaceVariant
-//                            )
                         }
                     }
                 )
             },
             bottomBar = {
-                Surface(tonalElevation = 3.dp) {
+                Surface(
+                    tonalElevation = 3.dp
+                ) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()

@@ -35,7 +35,7 @@ interface OpenRouterService {
             }
             val authInterceptor = Interceptor { chain ->
                 val req = chain.request().newBuilder()
-                    .addHeader("Authorization", "Bearer ${BuildConfig.OPEN_ROUTER_API_KEY}")
+                    .addHeader("Authorization", "Bearer ${BuildConfig.OPENROUTER_API_KEY}")
                     .addHeader("Content-Type", "application/json")
                     .build()
                 chain.proceed(req)

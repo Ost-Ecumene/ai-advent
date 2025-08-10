@@ -19,8 +19,6 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-
-//        buildConfigField("String","OPENROUTER_API_KEY","\"${project.findProperty("OPENROUTER_API_KEY") ?: System.getenv("OPENROUTER_API_KEY")}\"")
     }
 
     buildTypes {
@@ -30,6 +28,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
     compileOptions {
