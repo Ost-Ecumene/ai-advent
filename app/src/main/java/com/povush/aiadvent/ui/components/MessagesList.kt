@@ -2,6 +2,7 @@ package com.povush.aiadvent.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -36,10 +37,10 @@ fun MessagesList(
 
     LazyColumn(
         modifier = modifier
-            .fillMaxSize()
-            .padding(12.dp),
+            .fillMaxSize(),
         state = listState,
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        contentPadding = PaddingValues(12.dp)
     ) {
         itemsIndexed(messages) { _, item ->
             when (item) {
