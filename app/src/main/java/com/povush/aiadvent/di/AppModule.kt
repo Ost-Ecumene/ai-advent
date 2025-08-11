@@ -53,5 +53,8 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideChatRepository(openRouterService: OpenRouterService) = ChatRepository(openRouterService)
+    fun provideChatRepository(
+        openRouterService: OpenRouterService,
+        moshi: Moshi
+    ) = ChatRepository(openRouterService, moshi)
 }

@@ -1,4 +1,4 @@
-package com.povush.aiadvent.network.model
+package com.povush.aiadvent.network.dto
 
 import com.povush.aiadvent.AppConfig
 import com.squareup.moshi.JsonClass

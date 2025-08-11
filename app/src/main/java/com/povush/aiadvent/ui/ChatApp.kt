@@ -37,7 +37,10 @@ import com.povush.aiadvent.ui.components.MessagesList
 fun ChatApp(
     viewModel: ChatViewModel = hiltViewModel()
 ) {
-    val state by viewModel.state.collectAsState()
+    val input by viewModel.input.collectAsState()
+    val isStreaming by viewModel.isStreaming.collectAsState()
+    val error by viewModel.error.collectAsState()
+    val chatHistory by viewModel.chatHistory.collectAsState()
 
     Scaffold(
         topBar = {
@@ -76,7 +79,7 @@ fun ChatApp(
                     OutlinedTextField(
                         modifier = Modifier
                             .weight(1f),
-                        value = state.input,
+                        value = input,
                         onValueChange = viewModel::onInputChange,
                         placeholder = { Text("Тапай буковки…") },
                         singleLine = false,
@@ -86,8 +89,8 @@ fun ChatApp(
                     Spacer(Modifier.width(8.dp))
                     FilledIconButton(
                         onClick = { viewModel.send() },
-                        enabled = !state.isStreaming && state.input.isNotBlank(),
-                        shape = androidx.compose.foundation.shape.RoundedCornerShape(6.dp)
+                        enabled = !isStreaming && input.isNotBlank(),
+                        shape = RoundedCornerShape(6.dp)
                     ) {
                         Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Send")
                     }
@@ -100,16 +103,16 @@ fun ChatApp(
                 .fillMaxSize()
                 .padding(inner)
         ) {
-            if (state.error != null) {
+            if (error != null) {
                 Text(
-                    text = state.error ?: "",
+                    text = error ?: "",
                     color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                 )
             }
             MessagesList(
-                messages = state.messages,
+                messages = chatHistory,
                 modifier = Modifier.weight(1f)
             )
         }

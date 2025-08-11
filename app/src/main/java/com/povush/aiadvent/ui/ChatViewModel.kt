@@ -3,7 +3,7 @@ package com.povush.aiadvent.ui
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.povush.aiadvent.repository.ChatRepository
-import com.povush.aiadvent.network.model.QuestDto
+import com.povush.aiadvent.network.dto.QuestDto
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -15,67 +15,31 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ChatViewModel @Inject constructor(
-    private val repo: ChatRepository,
+    private val chatRepository: ChatRepository,
 ) : ViewModel() {
+    val chatHistory = chatRepository.chatHistory
+    val input = MutableStateFlow("")
+    val error = MutableStateFlow<String?>(null)
+    val isStreaming = MutableStateFlow(false)
 
-    data class Message(
-        val role: String,
-        val content: String = "",
-        val quest: QuestDto? = null,
-    )
-    data class UiState(
-        val messages: List<Message> = listOf(
-            Message("system", "Привет с планеты Пов-500!"),
-        ),
-        val input: String = "",
-        val isStreaming: Boolean = false,
-        val error: String? = null,
-    )
-
-    private val _state = MutableStateFlow(UiState())
-    val state: StateFlow<UiState> = _state
-
-    private val moshi = Moshi.Builder().add(KotlinJsonAdapterFactory()).build()
-    private val questAdapter = moshi.adapter(QuestDto::class.java)
-
-    fun onInputChange(value: String) { _state.update { it.copy(input = value) } }
+    fun onInputChange(value: String) {
+        input.value = value
+    }
 
     fun send() {
-        val userInput = state.value.input.trim()
-        if (userInput.isEmpty() || state.value.isStreaming) return
-        _state.update {
-            it.copy(
-                input = "",
-                messages = it.messages + Message("user", userInput),
-                error = null,
-            )
-        }
+        val userInput = input.value.trim()
+        if (userInput.isEmpty() || isStreaming.value) return
+        input.value = ""
+        error.value = null
+
         viewModelScope.launch {
-            _state.update { it.copy(isStreaming = true) }
+            isStreaming.value = true
             try {
-                val history = state.value.messages.mapNotNull { msg ->
-                    if (msg.role == "system") return@mapNotNull null
-                    val content = msg.quest?.let { questAdapter.toJson(it) } ?: msg.content
-                    msg.role to content
-                }
-                val response = repo.completeOnce(history)
-                val quest = runCatching { questAdapter.fromJson(response) }.getOrNull()
-                _state.update { st ->
-                    if (
-                        quest != null &&
-                        quest.title.isNotBlank() &&
-                        quest.description.isNotBlank() &&
-                        quest.tasks.isNotEmpty()
-                    ) {
-                        st.copy(messages = st.messages + Message("assistant", quest = quest))
-                    } else {
-                        st.copy(messages = st.messages + Message("assistant", content = response))
-                    }
-                }
+                chatRepository.sendRequest(userInput)
             } catch (t: Throwable) {
-                _state.update { it.copy(error = t.message ?: "Error") }
+                error.value = t.message ?: "Error"
             } finally {
-                _state.update { it.copy(isStreaming = false) }
+                isStreaming.value = false
             }
         }
     }
