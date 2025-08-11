@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.povush.aiadvent.AppConfig
 import com.povush.aiadvent.data.ChatRepository
 import com.povush.aiadvent.data.QuestDto
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -14,7 +16,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ChatViewModel @Inject constructor(
-    private val repo: ChatRepository
+    private val repo: ChatRepository,
 ) : ViewModel() {
 
     data class Message(
@@ -35,6 +37,9 @@ class ChatViewModel @Inject constructor(
     private val _state = MutableStateFlow(UiState())
     val state: StateFlow<UiState> = _state
 
+    private val moshi = Moshi.Builder().add(KotlinJsonAdapterFactory()).build()
+    private val questAdapter = moshi.adapter(QuestDto::class.java)
+
     fun onInputChange(value: String) { _state.update { it.copy(input = value) } }
 
     fun send() {
@@ -44,16 +49,25 @@ class ChatViewModel @Inject constructor(
             it.copy(
                 input = "",
                 messages = it.messages + Message("user", userInput),
-                error = null
+                error = null,
             )
         }
         viewModelScope.launch {
             _state.update { it.copy(isStreaming = true) }
             try {
-                val prompt = "Сгенерируй квест по следующему запросу: $userInput. Верни результат строго в формате JSON с полями: title - название квеста, description - описание квеста в 2-4 предложениях"
-                val quest = repo.requestQuest(state.value.model, prompt)
+                val history = state.value.messages.mapNotNull { msg ->
+                    if (msg.role == "system") return@mapNotNull null
+                    val content = msg.quest?.let { questAdapter.toJson(it) } ?: msg.content
+                    msg.role to content
+                }
+                val response = repo.completeOnce(state.value.model, history)
+                val quest = runCatching { questAdapter.fromJson(response) }.getOrNull()
                 _state.update { st ->
-                    st.copy(messages = st.messages + Message("assistant", quest = quest))
+                    if (quest != null && quest.title.isNotBlank() && quest.description.isNotBlank()) {
+                        st.copy(messages = st.messages + Message("assistant", quest = quest))
+                    } else {
+                        st.copy(messages = st.messages + Message("assistant", content = response))
+                    }
                 }
             } catch (t: Throwable) {
                 _state.update { it.copy(error = t.message ?: "Error") }
@@ -63,3 +77,4 @@ class ChatViewModel @Inject constructor(
         }
     }
 }
+

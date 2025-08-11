@@ -1,6 +1,5 @@
 package com.povush.aiadvent.data
 
-import com.povush.aiadvent.AppConfig
 import com.povush.aiadvent.BuildConfig
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
@@ -18,18 +17,13 @@ import retrofit2.http.Streaming
 interface OpenRouterService {
     @POST("chat/completions")
     suspend fun chatCompletion(
-        @Body body: ChatRequestDto
-    ): ChatResponseDto
-
-    @POST("chat/completions")
-    suspend fun questCompletion(
-        @Body body: ChatRequestDto
+        @Body body: ChatRequestDto,
     ): ChatResponseDto
 
     @Streaming
     @POST("chat/completions")
     suspend fun streamChatCompletion(
-        @Body body: ChatRequestDto
+        @Body body: ChatRequestDto,
     ): Response<ResponseBody>
 
     companion object {
@@ -64,3 +58,4 @@ interface OpenRouterService {
         }
     }
 }
+

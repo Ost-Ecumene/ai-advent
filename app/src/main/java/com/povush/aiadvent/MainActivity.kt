@@ -85,7 +85,7 @@ fun ChatApp(vm: ChatViewModel = hiltViewModel()) {
                                     .padding(
                                         top = 8.dp
                                     )
-                                    .fillMaxWidth()
+                                    .fillMaxWidth(),
                             )
                         }
                     }
@@ -125,9 +125,11 @@ fun ChatApp(vm: ChatViewModel = hiltViewModel()) {
                 }
             }
         ) { inner ->
-            Column(Modifier
-                .fillMaxSize()
-                .padding(inner)) {
+            Column(
+                Modifier
+                    .fillMaxSize()
+                    .padding(inner)
+            ) {
                 if (state.error != null) {
                     Text(
                         text = state.error ?: "",
@@ -148,7 +150,7 @@ fun ChatApp(vm: ChatViewModel = hiltViewModel()) {
 @Composable
 private fun MessagesList(
     messages: List<ChatViewModel.Message>,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val listState = rememberLazyListState()
     LaunchedEffect(messages.size) {
@@ -217,3 +219,4 @@ private fun QuestCard(quest: QuestDto, modifier: Modifier = Modifier) {
         }
     }
 }
+
