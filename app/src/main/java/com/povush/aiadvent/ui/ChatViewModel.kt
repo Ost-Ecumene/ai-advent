@@ -63,7 +63,12 @@ class ChatViewModel @Inject constructor(
                 val response = repo.completeOnce(state.value.model, history)
                 val quest = runCatching { questAdapter.fromJson(response) }.getOrNull()
                 _state.update { st ->
-                    if (quest != null && quest.title.isNotBlank() && quest.description.isNotBlank()) {
+                    if (
+                        quest != null &&
+                        quest.title.isNotBlank() &&
+                        quest.description.isNotBlank() &&
+                        quest.tasks.isNotEmpty()
+                    ) {
                         st.copy(messages = st.messages + Message("assistant", quest = quest))
                     } else {
                         st.copy(messages = st.messages + Message("assistant", content = response))

@@ -10,7 +10,7 @@ class ChatRepository @Inject constructor(
 ) {
     private val systemPrompt = """
         Определяй, просит ли пользователь сгенерировать квест.
-        Если да, ответь строго в формате JSON с полями "title" и "description" (2-4 предложения).
+        Если да, ответь строго в формате JSON с полями "title", "description" (2-4 предложения) и "tasks" (список строк).
         Если нет – отвечай обычным текстом.
     """.trimIndent()
 

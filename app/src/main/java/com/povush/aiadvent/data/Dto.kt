@@ -35,6 +35,7 @@ data class JsonSchemaDto(
 data class QuestDto(
     val title: String,
     val description: String,
+    val tasks: List<String> = emptyList(),
 )
 
 @JsonClass(generateAdapter = true)
