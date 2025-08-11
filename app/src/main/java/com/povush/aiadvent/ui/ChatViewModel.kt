@@ -23,7 +23,7 @@ class ChatViewModel @Inject constructor(
         ),
         val input: String = "",
         val isStreaming: Boolean = false,
-        val model: String = AppConfig.DEEPSEEK_R1_QWEN3_8B_FREE,
+        val model: String = AppConfig.GPT_OSS_20B_FREE,
         val error: String? = null
     )
 
