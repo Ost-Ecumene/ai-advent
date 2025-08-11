@@ -16,6 +16,25 @@ data class ChatRequestDto(
     val stream: Boolean = false,
     @Json(name = "temperature") val temperature: Double? = null,
     @Json(name = "max_tokens") val maxTokens: Int? = null,
+    @Json(name = "response_format") val responseFormat: ResponseFormatDto? = null,
+)
+
+@JsonClass(generateAdapter = true)
+data class ResponseFormatDto(
+    val type: String,
+    @Json(name = "json_schema") val jsonSchema: JsonSchemaDto
+)
+
+@JsonClass(generateAdapter = true)
+data class JsonSchemaDto(
+    val name: String,
+    val schema: Map<String, Any>
+)
+
+@JsonClass(generateAdapter = true)
+data class QuestDto(
+    val title: String,
+    val description: String
 )
 
 @JsonClass(generateAdapter = true)

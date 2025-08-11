@@ -21,6 +21,11 @@ interface OpenRouterService {
         @Body body: ChatRequestDto
     ): ChatResponseDto
 
+    @POST("chat/completions")
+    suspend fun questCompletion(
+        @Body body: ChatRequestDto
+    ): ChatResponseDto
+
     @Streaming
     @POST("chat/completions")
     suspend fun streamChatCompletion(
