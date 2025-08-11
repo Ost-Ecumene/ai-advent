@@ -2,9 +2,8 @@ package com.povush.aiadvent.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.povush.aiadvent.AppConfig
-import com.povush.aiadvent.data.ChatRepository
-import com.povush.aiadvent.data.QuestDto
+import com.povush.aiadvent.repository.ChatRepository
+import com.povush.aiadvent.network.model.QuestDto
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -30,7 +29,6 @@ class ChatViewModel @Inject constructor(
         ),
         val input: String = "",
         val isStreaming: Boolean = false,
-        val model: String = AppConfig.GPT_OSS_20B_FREE,
         val error: String? = null,
     )
 
@@ -60,7 +58,7 @@ class ChatViewModel @Inject constructor(
                     val content = msg.quest?.let { questAdapter.toJson(it) } ?: msg.content
                     msg.role to content
                 }
-                val response = repo.completeOnce(state.value.model, history)
+                val response = repo.completeOnce(history)
                 val quest = runCatching { questAdapter.fromJson(response) }.getOrNull()
                 _state.update { st ->
                     if (
