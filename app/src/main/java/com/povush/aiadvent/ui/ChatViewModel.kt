@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.povush.aiadvent.AppConfig
 import com.povush.aiadvent.data.ChatRepository
+import com.povush.aiadvent.data.QuestDto
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -24,13 +25,24 @@ class ChatViewModel @Inject constructor(
         val input: String = "",
         val isStreaming: Boolean = false,
         val model: String = AppConfig.GPT_OSS_20B_FREE,
-        val error: String? = null
+        val error: String? = null,
+        val quest: QuestDto? = null
     )
 
     private val _state = MutableStateFlow(UiState())
     val state: StateFlow<UiState> = _state
 
     fun onInputChange(value: String) { _state.update { it.copy(input = value) } }
+
+    fun loadQuest() = viewModelScope.launch {
+        try {
+            val prompt = "Сгенерируй квест и верни результат строго в формате JSON с полями: title - название квеста, description - описание квеста в 2-4 предложениях"
+            val quest = repo.requestQuest(state.value.model, prompt)
+            _state.update { it.copy(quest = quest) }
+        } catch (t: Throwable) {
+            _state.update { it.copy(error = t.message ?: "Error") }
+        }
+    }
 
     fun send(stream: Boolean = true) {
         val prompt = state.value.input.trim()

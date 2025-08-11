@@ -45,6 +45,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.povush.aiadvent.ui.ChatViewModel
+import com.povush.aiadvent.data.QuestDto
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -67,6 +68,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun ChatApp(vm: ChatViewModel = hiltViewModel()) {
     val state by vm.state.collectAsState()
+    LaunchedEffect(Unit) { vm.loadQuest() }
     MaterialTheme {
         Scaffold(
             topBar = {
@@ -135,6 +137,14 @@ fun ChatApp(vm: ChatViewModel = hiltViewModel()) {
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                     )
                 }
+                state.quest?.let {
+                    QuestCard(
+                        quest = it,
+                        modifier = Modifier
+                            .padding(horizontal = 16.dp, vertical = 8.dp)
+                            .fillMaxWidth()
+                    )
+                }
                 MessagesList(
                     messages = state.messages,
                     modifier = Modifier.weight(1f)
@@ -184,6 +194,21 @@ private fun MessagesList(
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun QuestCard(quest: QuestDto, modifier: Modifier = Modifier) {
+    Surface(
+        modifier = modifier,
+        tonalElevation = 2.dp,
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Column(Modifier.padding(16.dp)) {
+            Text(quest.title, style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(4.dp))
+            Text(quest.description, style = MaterialTheme.typography.bodyMedium)
         }
     }
 }
