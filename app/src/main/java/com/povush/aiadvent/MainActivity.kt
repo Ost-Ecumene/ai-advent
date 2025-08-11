@@ -42,6 +42,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -212,7 +213,7 @@ private fun MessagesList(
 
 @Composable
 private fun QuestCard(quest: QuestDto, modifier: Modifier = Modifier) {
-    var expanded by remember { mutableStateOf(true) }
+    var expanded by remember { mutableStateOf(false) }
     val checks = remember(quest.tasks) {
         mutableStateListOf<Boolean>().apply { repeat(quest.tasks.size) { add(false) } }
     }
