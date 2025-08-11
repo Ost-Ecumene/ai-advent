@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -24,6 +25,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.HorizontalDivider
@@ -37,6 +39,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -45,6 +51,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.povush.aiadvent.ui.ChatViewModel
+import com.povush.aiadvent.data.QuestDto
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -84,7 +91,7 @@ fun ChatApp(vm: ChatViewModel = hiltViewModel()) {
                                     .padding(
                                         top = 8.dp
                                     )
-                                    .fillMaxWidth()
+                                    .fillMaxWidth(),
                             )
                         }
                     }
@@ -114,7 +121,7 @@ fun ChatApp(vm: ChatViewModel = hiltViewModel()) {
                         )
                         Spacer(Modifier.width(8.dp))
                         FilledIconButton(
-                            onClick = { vm.send(stream = true) },
+                            onClick = { vm.send() },
                             enabled = !state.isStreaming && state.input.isNotBlank(),
                             shape = RoundedCornerShape(6.dp)
                         ) {
@@ -124,9 +131,11 @@ fun ChatApp(vm: ChatViewModel = hiltViewModel()) {
                 }
             }
         ) { inner ->
-            Column(Modifier
-                .fillMaxSize()
-                .padding(inner)) {
+            Column(
+                Modifier
+                    .fillMaxSize()
+                    .padding(inner)
+            ) {
                 if (state.error != null) {
                     Text(
                         text = state.error ?: "",
@@ -147,7 +156,7 @@ fun ChatApp(vm: ChatViewModel = hiltViewModel()) {
 @Composable
 private fun MessagesList(
     messages: List<ChatViewModel.Message>,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val listState = rememberLazyListState()
     LaunchedEffect(messages.size) {
@@ -161,29 +170,80 @@ private fun MessagesList(
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         itemsIndexed(messages) { _, msg ->
-            val isUser = msg.role == "user"
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = if (isUser) Arrangement.End else Arrangement.Start
-            ) {
-                Surface(
-                    color = if (isUser) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainer,
-                    tonalElevation = 1.dp,
-                    shape = MaterialTheme.shapes.medium
+            if (msg.quest != null) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Start
                 ) {
-                    Column(Modifier
-                        .widthIn(max = 520.dp)
-                        .padding(12.dp)) {
-                        Text(
-                            text = if (isUser) "Ты" else "ПовБот \uD83E\uDD16",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(Modifier.height(4.dp))
-                        Text(msg.content, style = MaterialTheme.typography.bodyMedium)
+                    QuestCard(
+                        quest = msg.quest,
+                        modifier = Modifier.widthIn(max = 520.dp)
+                    )
+                }
+            } else {
+                val isUser = msg.role == "user"
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = if (isUser) Arrangement.End else Arrangement.Start
+                ) {
+                    Surface(
+                        color = if (isUser) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainer,
+                        tonalElevation = 1.dp,
+                        shape = MaterialTheme.shapes.medium
+                    ) {
+                        Column(
+                            Modifier
+                                .widthIn(max = 520.dp)
+                                .padding(12.dp)
+                        ) {
+                            Text(
+                                text = if (isUser) "Ты" else "ПовБот \uD83E\uDD16",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(Modifier.height(4.dp))
+                            Text(msg.content, style = MaterialTheme.typography.bodyMedium)
+                        }
                     }
                 }
             }
         }
     }
 }
+
+@Composable
+private fun QuestCard(quest: QuestDto, modifier: Modifier = Modifier) {
+    var expanded by remember { mutableStateOf(false) }
+    val checks = remember(quest.tasks) {
+        mutableStateListOf<Boolean>().apply { repeat(quest.tasks.size) { add(false) } }
+    }
+    Surface(
+        modifier = modifier,
+        tonalElevation = 2.dp,
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Column(Modifier.padding(16.dp)) {
+            Text(
+                quest.title,
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.clickable { expanded = !expanded }
+            )
+            if (expanded) {
+                Spacer(Modifier.height(4.dp))
+                Text(quest.description, style = MaterialTheme.typography.bodyMedium)
+                quest.tasks.forEachIndexed { index, task ->
+                    Spacer(Modifier.height(8.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Checkbox(
+                            checked = checks.getOrNull(index) ?: false,
+                            onCheckedChange = { if (index < checks.size) checks[index] = it }
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text(task, style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
+            }
+        }
+    }
+}
+
