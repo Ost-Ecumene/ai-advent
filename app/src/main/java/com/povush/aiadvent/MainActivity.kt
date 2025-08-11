@@ -68,7 +68,6 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun ChatApp(vm: ChatViewModel = hiltViewModel()) {
     val state by vm.state.collectAsState()
-    LaunchedEffect(Unit) { vm.loadQuest() }
     MaterialTheme {
         Scaffold(
             topBar = {
@@ -116,7 +115,7 @@ fun ChatApp(vm: ChatViewModel = hiltViewModel()) {
                         )
                         Spacer(Modifier.width(8.dp))
                         FilledIconButton(
-                            onClick = { vm.send(stream = true) },
+                            onClick = { vm.send() },
                             enabled = !state.isStreaming && state.input.isNotBlank(),
                             shape = RoundedCornerShape(6.dp)
                         ) {
@@ -135,14 +134,6 @@ fun ChatApp(vm: ChatViewModel = hiltViewModel()) {
                         color = MaterialTheme.colorScheme.error,
                         style = MaterialTheme.typography.bodySmall,
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-                    )
-                }
-                state.quest?.let {
-                    QuestCard(
-                        quest = it,
-                        modifier = Modifier
-                            .padding(horizontal = 16.dp, vertical = 8.dp)
-                            .fillMaxWidth()
                     )
                 }
                 MessagesList(
@@ -171,26 +162,40 @@ private fun MessagesList(
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         itemsIndexed(messages) { _, msg ->
-            val isUser = msg.role == "user"
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = if (isUser) Arrangement.End else Arrangement.Start
-            ) {
-                Surface(
-                    color = if (isUser) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainer,
-                    tonalElevation = 1.dp,
-                    shape = MaterialTheme.shapes.medium
+            if (msg.quest != null) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Start
                 ) {
-                    Column(Modifier
-                        .widthIn(max = 520.dp)
-                        .padding(12.dp)) {
-                        Text(
-                            text = if (isUser) "Ты" else "ПовБот \uD83E\uDD16",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(Modifier.height(4.dp))
-                        Text(msg.content, style = MaterialTheme.typography.bodyMedium)
+                    QuestCard(
+                        quest = msg.quest,
+                        modifier = Modifier.widthIn(max = 520.dp)
+                    )
+                }
+            } else {
+                val isUser = msg.role == "user"
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = if (isUser) Arrangement.End else Arrangement.Start
+                ) {
+                    Surface(
+                        color = if (isUser) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainer,
+                        tonalElevation = 1.dp,
+                        shape = MaterialTheme.shapes.medium
+                    ) {
+                        Column(
+                            Modifier
+                                .widthIn(max = 520.dp)
+                                .padding(12.dp)
+                        ) {
+                            Text(
+                                text = if (isUser) "Ты" else "ПовБот \uD83E\uDD16",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(Modifier.height(4.dp))
+                            Text(msg.content, style = MaterialTheme.typography.bodyMedium)
+                        }
                     }
                 }
             }

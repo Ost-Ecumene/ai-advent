@@ -17,7 +17,11 @@ class ChatViewModel @Inject constructor(
     private val repo: ChatRepository
 ) : ViewModel() {
 
-    data class Message(val role: String, val content: String)
+    data class Message(
+        val role: String,
+        val content: String = "",
+        val quest: QuestDto? = null,
+    )
     data class UiState(
         val messages: List<Message> = listOf(
             Message("system", "Привет с планеты Пов-500!"),
@@ -26,7 +30,6 @@ class ChatViewModel @Inject constructor(
         val isStreaming: Boolean = false,
         val model: String = AppConfig.GPT_OSS_20B_FREE,
         val error: String? = null,
-        val quest: QuestDto? = null
     )
 
     private val _state = MutableStateFlow(UiState())
@@ -34,62 +37,29 @@ class ChatViewModel @Inject constructor(
 
     fun onInputChange(value: String) { _state.update { it.copy(input = value) } }
 
-    fun loadQuest() = viewModelScope.launch {
-        try {
-            val prompt = "Сгенерируй квест и верни результат строго в формате JSON с полями: title - название квеста, description - описание квеста в 2-4 предложениях"
-            val quest = repo.requestQuest(state.value.model, prompt)
-            _state.update { it.copy(quest = quest) }
-        } catch (t: Throwable) {
-            _state.update { it.copy(error = t.message ?: "Error") }
-        }
-    }
-
-    fun send(stream: Boolean = true) {
-        val prompt = state.value.input.trim()
-        if (prompt.isEmpty() || state.value.isStreaming) return
+    fun send() {
+        val userInput = state.value.input.trim()
+        if (userInput.isEmpty() || state.value.isStreaming) return
         _state.update {
             it.copy(
                 input = "",
-                messages = it.messages + Message("user", prompt),
+                messages = it.messages + Message("user", userInput),
                 error = null
             )
         }
-        if (stream) sendStreaming() else sendOnce()
-    }
-
-    private fun sendOnce() = viewModelScope.launch {
-        _state.update { it.copy(isStreaming = true) }
-        try {
-            val answer = repo.completeOnce(
-                state.value.model,
-                history = state.value.messages.map { it.role to it.content }
-            )
-            _state.update { it.copy(messages = it.messages + Message("assistant", answer)) }
-        } catch (t: Throwable) {
-            _state.update { it.copy(error = t.message ?: "Error") }
-        } finally {
-            _state.update { it.copy(isStreaming = false) }
-        }
-    }
-
-    private fun sendStreaming() = viewModelScope.launch {
-        _state.update { it.copy(isStreaming = true) }
-        val base = state.value.messages.map { it.role to it.content }
-        val sb = StringBuilder()
-        try {
-            repo.streamCompletion(state.value.model, base).collect { token ->
-                sb.append(token)
-                _state.update { it.copy(messages = it.messages.dropLast(0)) } // trigger
-                // show the partial assistant message by replacing/adding last
+        viewModelScope.launch {
+            _state.update { it.copy(isStreaming = true) }
+            try {
+                val prompt = "Сгенерируй квест по следующему запросу: $userInput. Верни результат строго в формате JSON с полями: title - название квеста, description - описание квеста в 2-4 предложениях"
+                val quest = repo.requestQuest(state.value.model, prompt)
                 _state.update { st ->
-                    val withoutDraft = st.messages.filterIndexed { idx, _ -> idx < base.size }
-                    st.copy(messages = withoutDraft + Message("assistant", sb.toString()))
+                    st.copy(messages = st.messages + Message("assistant", quest = quest))
                 }
+            } catch (t: Throwable) {
+                _state.update { it.copy(error = t.message ?: "Error") }
+            } finally {
+                _state.update { it.copy(isStreaming = false) }
             }
-        } catch (t: Throwable) {
-            _state.update { it.copy(error = t.message) }
-        } finally {
-            _state.update { it.copy(isStreaming = false) }
         }
     }
 }
