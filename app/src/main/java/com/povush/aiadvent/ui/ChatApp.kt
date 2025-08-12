@@ -49,7 +49,7 @@ fun ChatApp(
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text("AI Advent Chat")
                         Text(
-                            AppConfig.GPT_OSS_20B_FREE,
+                            AppConfig.CURRENT_MODEL,
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

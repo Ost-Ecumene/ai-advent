@@ -22,7 +22,7 @@ class ChatRepository @Inject constructor(
     private val chatSystemPrompt = listOf(ChatMessageDto("system", AppConfig.basicSystemPrompt))
     private val basicHistory = listOf(
         ChatItem.Message(
-            text = "Привет с планеты Пов-500!",
+            text = AppConfig.FIRST_MESSAGE,
             role = Role.Assistant
         )
     )
