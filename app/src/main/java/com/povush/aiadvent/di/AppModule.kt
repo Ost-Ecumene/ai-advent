@@ -4,6 +4,7 @@ import com.povush.aiadvent.AppConfig
 import com.povush.aiadvent.BuildConfig
 import com.povush.aiadvent.repository.ChatRepository
 import com.povush.aiadvent.network.OpenRouterService
+import com.povush.aiadvent.service.QuestGeneratorLLMService
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import dagger.Module
@@ -53,8 +54,15 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideChatRepository(
+    fun provideQuestGeneratorLLMService(
         openRouterService: OpenRouterService,
         moshi: Moshi
-    ) = ChatRepository(openRouterService, moshi)
+    ) = QuestGeneratorLLMService(openRouterService, moshi)
+
+    @Provides
+    @Singleton
+    fun provideChatRepository(
+        openRouterService: OpenRouterService,
+        questGeneratorLLMService: QuestGeneratorLLMService
+    ) = ChatRepository(openRouterService, questGeneratorLLMService)
 }

@@ -22,7 +22,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.povush.aiadvent.model.ChatItem
 import com.povush.aiadvent.model.Role
-import com.povush.aiadvent.ui.ChatViewModel
 
 @Composable
 fun MessagesList(
@@ -73,7 +72,7 @@ fun MessagesList(
                                     .padding(12.dp)
                             ) {
                                 Text(
-                                    text = if (isUser) "Ты" else "ПовБот \uD83E\uDD16",
+                                    text = if (isUser) "Ты" else "ПовБот \uD83E\uDD16 (Собеседник)",
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -81,6 +80,20 @@ fun MessagesList(
                                 Text(item.text, style = MaterialTheme.typography.bodyMedium)
                             }
                         }
+                    }
+                }
+                is ChatItem.Log -> {
+                    Column {
+                        Text(
+                            text = "LOG (Собеседник)",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            text = item.text,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
                     }
                 }
             }

@@ -39,6 +39,12 @@ fun QuestCard(
     ) {
         Column(Modifier.padding(16.dp)) {
             Text(
+                text = "ПовБот \uD83E\uDD16 (Квестогенератор)",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
                 quest.title,
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.clickable { expanded = !expanded }

@@ -1,14 +1,14 @@
 package com.povush.aiadvent.repository
 
+import android.R.attr.description
 import com.povush.aiadvent.AppConfig
 import com.povush.aiadvent.model.ChatItem
 import com.povush.aiadvent.model.Role
 import com.povush.aiadvent.network.OpenRouterService
 import com.povush.aiadvent.network.dto.ChatMessageDto
 import com.povush.aiadvent.network.dto.ChatRequestDto
-import com.povush.aiadvent.network.dto.QuestDto
 import com.povush.aiadvent.network.dto.toText
-import com.squareup.moshi.Moshi
+import com.povush.aiadvent.service.QuestGeneratorLLMService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -16,10 +16,9 @@ import javax.inject.Inject
 
 class ChatRepository @Inject constructor(
     private val openRouterService: OpenRouterService,
-    moshi: Moshi
+    private val questGeneratorLLMService: QuestGeneratorLLMService
 ) {
-    private val questAdapter = moshi.adapter(QuestDto::class.java)
-    private val chatSystemPrompt = listOf(ChatMessageDto("system", AppConfig.basicSystemPrompt))
+    private val chatSystemPrompt = listOf(ChatMessageDto("system", AppConfig.companionSystemPrompt))
     private val basicHistory = listOf(
         ChatItem.Message(
             text = AppConfig.FIRST_MESSAGE,
@@ -41,12 +40,16 @@ class ChatRepository @Inject constructor(
         val messages = chatSystemPrompt + chatHistory.value.map { chatItem ->
             when (chatItem) {
                 is ChatItem.Message -> ChatMessageDto(
-                    role = chatItem.role.nameText,
+                    role = chatItem.role.internalName,
                     content = chatItem.text
                 )
                 is ChatItem.Quest -> ChatMessageDto(
-                    role = Role.User.nameText,
+                    role = Role.User.internalName,
                     content = chatItem.quest.toText()
+                )
+                is ChatItem.Log -> ChatMessageDto(
+                    role = chatItem.role.internalName,
+                    content = chatItem.text
                 )
             }
         }
@@ -54,11 +57,17 @@ class ChatRepository @Inject constructor(
         val request = ChatRequestDto(messages = messages)
         val response = openRouterService.chatCompletion(request)
         val responseContent = response.choices.firstOrNull()?.message?.content ?: throw NullPointerException("Ответ от ИИ не должен быть null!")
-        val quest = runCatching { questAdapter.fromJson(responseContent) }.getOrNull()
 
-        val answer = quest?.let {
-            ChatItem.Quest(quest = it)
-        } ?: run {
+        val answer = if (responseContent.startsWith("Инициировать создание квеста!")) {
+            val description = responseContent.removePrefix("Инициировать создание квеста!")
+            val log = ChatItem.Log(
+                text = description,
+                role = Role.Assistant
+            )
+            _chatHistory.update { it + log }
+            val quest = questGeneratorLLMService.createQuest(description)
+            ChatItem.Quest(quest = quest)
+        } else {
             ChatItem.Message(
                 text = responseContent,
                 role = Role.Assistant
